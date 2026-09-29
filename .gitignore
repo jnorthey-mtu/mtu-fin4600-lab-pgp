@@ -1,0 +1,20 @@
+# Keys, signatures, and encrypted files: never commit these
+*.asc
+*.gpg
+*.pgp
+*.key
+*.rev
+
+# Lab working files and student records
+answer.txt
+roster.csv
+answer_key.csv
+grades.csv
+student_keys/
+challenges/
+responses/
+
+# Jupyter, Python, and OS clutter
+.ipynb_checkpoints/
+__pycache__/
+.DS_Store
