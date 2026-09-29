@@ -17,7 +17,7 @@ In this two-session lab you create your own OpenPGP key, check and certify your 
 | `notebooks/FIN4600_PGP_Lab_Student.ipynb` | The lab notebook, Parts A to E |
 | `docs/study-guide.md` | Concepts, diagrams, key terms, self-check questions, and the lab checklist |
 | `docs/slides.md` | The lecture slides, with notes |
-| `requirements.txt` | Python packages for the notebook |
+| `pyproject.toml` / `uv.lock` | Python packages for the notebook, managed by uv |
 | `.gitignore` | Keeps keys, encrypted files, and your answers out of git |
 
 ## Before session 1
@@ -25,10 +25,10 @@ In this two-session lab you create your own OpenPGP key, check and certify your 
 1. **Install GnuPG with a key manager.**
    - Windows: [Gpg4win](https://www.gpg4win.org) (includes Kleopatra)
    - macOS: [GPG Suite](https://gpgtools.org) (includes GPG Keychain)
-2. **Install Python 3.9 or later**, then install the packages from this folder:
+2. **Install [uv](https://docs.astral.sh/uv/getting-started/installation/)**, then create the virtual environment and install the packages from this folder:
 
    ```bash
-   pip install -r requirements.txt
+   uv sync
    ```
 
    The package is `python-gnupg`. Do **not** install the unrelated package named `gnupg`.
@@ -41,10 +41,10 @@ Do not create your key pair yet. You will do that in class.
 Run the notebook **on your own laptop**, not in Google Colab. It must use the same GnuPG keyring as Kleopatra or GPG Keychain.
 
 ```bash
-jupyter lab notebooks/FIN4600_PGP_Lab_Student.ipynb
+uv run jupyter lab notebooks/FIN4600_PGP_Lab_Student.ipynb
 ```
 
-VS Code with the Jupyter extension also works.
+VS Code with the Jupyter extension also works: open the notebook and pick the `.venv` created by `uv sync` in the kernel picker.
 
 Save the files from Canvas (`instructor_pub.asc` in session 1, your `challenge_<user>.asc` in session 2) into the `notebooks/` folder, next to the notebook.
 
@@ -73,7 +73,8 @@ When GnuPG needs your passphrase, a separate window opens. If a cell seems stuck
 | Problem | Fix |
 | --- | --- |
 | `gpg not found` | Install Gpg4win or GPG Suite, then restart Jupyter |
-| `No module named gnupg`, or odd errors | `pip uninstall -y gnupg`, then `pip install python-gnupg` |
+| `uv: command not found` | Install uv, see [installation docs](https://docs.astral.sh/uv/getting-started/installation/) |
+| `No module named gnupg`, or odd errors | `uv pip uninstall -y gnupg`, then `uv sync` |
 | More than one key pair | Delete the extra key in Kleopatra, or set `MY_FPR_OVERRIDE` in the notebook |
 | "unusable public key" or "no assurance" | Run the Part C cell again with the fingerprint from the board |
 | "No secret key" when decrypting | Your challenge was made for a different key. Tell your instructor |
