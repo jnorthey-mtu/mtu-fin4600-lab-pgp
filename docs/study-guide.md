@@ -162,22 +162,53 @@ Check each term once you can explain it in your own words.
 9. Publish your revocation certificate, create a new key, and tell your contacts.
 10. Encrypted, signed payroll, ACH, or settlement files over SFTP; verifying signed software releases.
 
+## Getting started with the lab notebook
+
+The whole lab runs in one Jupyter notebook, `notebooks/FIN4600_PGP_Lab_Student.ipynb`, in the course repository `mtu-fin4600-lab-pgp`.
+
+1. Install **Gpg4win** (Windows) or **GPG Suite** (macOS).
+2. Install **uv**, the Python project manager. It also installs the right Python version for you, so you don't need to install Python separately.
+   - Windows (PowerShell): `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
+   - macOS: `brew install uv`, or `curl -LsSf https://astral.sh/uv/install.sh | sh`
+   - Close and reopen your terminal afterward, then check with `uv --version`.
+3. Clone the repository and set up its environment. `uv sync` reads `pyproject.toml` and installs everything the lab needs into a project folder called `.venv`:
+
+   ```bash
+   git clone <repository URL from Canvas>
+   cd mtu-fin4600-lab-pgp
+   uv sync
+   uv run jupyter lab notebooks/FIN4600_PGP_Lab_Student.ipynb
+   ```
+
+   Always start Jupyter with `uv run` so the notebook uses the project's environment. In VS Code, open the repository folder and choose the `.venv` interpreter as the notebook kernel.
+4. Run the notebook **on your own laptop**, not in Google Colab, so it uses the same keyring as Kleopatra or GPG Keychain.
+5. Each time you open the notebook, run the **Setup** cells first. Put the fingerprint from the board, and later your challenge file name, in the **configuration cell**. Don't edit the code cells.
+
+| Part | Session | What you do | Questions |
+| --- | --- | --- | --- |
+| A | 1 | Watch signing and encryption work between Alice and Bob | 1–3 |
+| B | 1 | Look inside your own key | 4 |
+| C | 1 | Check and certify your instructor's key | 5 |
+| D | 1 | Export your public key for Canvas | — |
+| E | 2 | Decrypt your challenge and send a signed, encrypted answer | 6 |
+
 ## Lab checklist
 
 ### Session 1
 
-- [ ] Installed Gpg4win (Windows) or GPG Suite (macOS), and ran `pip install -r requirements.txt`
+- [ ] Installed Gpg4win (Windows) or GPG Suite (macOS) and uv, cloned the repository, and ran `uv sync`
 - [ ] Created **exactly one** key pair with your @mtu.edu address and a strong passphrase
-- [ ] Ran Part A (Alice and Bob) and answered Questions 1 to 3
-- [ ] Ran Part B and found your primary key, subkey, and self-signatures
-- [ ] Ran Part C: fingerprint matched the board, and the instructor key was certified
-- [ ] Ran Part D: uploaded `my_public_key.asc` to Canvas and typed your fingerprint into the Canvas quiz
+- [ ] Started Jupyter with `uv run jupyter lab`, ran the Setup cells and Part A (Alice and Bob); answered Questions 1–3
+- [ ] Ran Part B and found your primary key, subkey, and self-signatures; answered Question 4
+- [ ] Pasted the board fingerprint into the configuration cell and ran Part C: fingerprint matched, instructor key certified; answered Question 5
+- [ ] Ran Part D: uploaded `my_public_key.asc` to the Canvas assignment and typed your fingerprint into the Canvas quiz
 - [ ] Backed up your revocation certificate
 
 ### Session 2
 
-- [ ] Decrypted your challenge and saw **GOOD signature** from the instructor
-- [ ] Wrote your code word and answer, then created `response.asc`
+- [ ] Re-ran the Setup cells and Part B, and set `CHALLENGE_FILE` in the configuration cell
+- [ ] Ran Part E: decrypted your challenge and saw **GOOD signature** from the instructor; answered Question 6
+- [ ] Put your code word and answer in the `ANSWER` cell and ran Part E2 to create `response.asc`
 - [ ] Uploaded `response.asc` to Canvas
 
 ## Common mistakes
@@ -185,7 +216,9 @@ Check each term once you can explain it in your own words.
 | Mistake | What to do |
 | --- | --- |
 | Created two key pairs | Delete the extra one in Kleopatra, or set `MY_FPR_OVERRIDE` in the notebook |
-| Installed the package `gnupg` | `pip uninstall gnupg`, then `pip install python-gnupg` |
+| `uv: command not found` | Close and reopen the terminal after installing uv; on Windows, open a new PowerShell window |
+| Notebook says `No module named gnupg` | Jupyter isn't using the project environment. Run `uv sync`, then start Jupyter with `uv run jupyter lab`; in VS Code, select the `.venv` kernel |
+| Installed packages with `pip` | Not needed and can cause conflicts. Run `uv sync` to restore the environment from `pyproject.toml` |
 | Nothing happens when a cell runs | The passphrase window may be hidden behind other windows |
 | Uploaded or committed your private key | Tell your instructor right away, revoke the key, and create a new one |
 | Ran the notebook in Google Colab | Run it on your own laptop so it uses your Kleopatra or GPG Keychain keyring |
