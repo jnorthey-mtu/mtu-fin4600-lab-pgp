@@ -21,7 +21,9 @@ In this two-session lab you create your own OpenPGP key, check and certify your 
 | `.gitignore` | Keeps keys, encrypted files, and your answers out of git |
 
 ## Clone this Repository - you do not have to fork it
-I will not be grading your Jupyter Notebook. The Jupyter Notebook for this lab is just a tool to perform encryption/decryption and signing for you.
+I will not be grading your Jupyter Notebook. Since I am not going to be looking at your Jupyter Notebook coding changes up on GitHub - no reason to fork the repository you can just clone this one.
+
+The Jupyter Notebook for this lab is just a tool to perform encryption/decryption and signing for you.
 
 Clone this repository on your PC using Vs-code or git command line statements
 
