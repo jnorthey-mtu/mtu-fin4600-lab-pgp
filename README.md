@@ -20,12 +20,22 @@ In this two-session lab you create your own OpenPGP key, check and certify your 
 | `pyproject.toml` / `uv.lock` | Python packages for the notebook, managed by uv |
 | `.gitignore` | Keeps keys, encrypted files, and your answers out of git |
 
-## Clone this Repository - you do not have to fork it
+## Initial Step - Clone this Repository - you do not have to fork it
 I will not be grading your Jupyter Notebook. Since I am not going to be looking at your Jupyter Notebook coding changes up on GitHub - no reason to fork the repository you can just clone this one.
 
 The Jupyter Notebook for this lab is just a tool to perform encryption/decryption and signing for you.
 
-Clone this repository on your PC using Vs-code or git command line statements
+Clone this repository on your PC using Vs-code or git command line statements.
+
+### Using Microsoft VS-Code
+Within vs-code you can copy the url to this repository you are looking at right now: [https://github.com/jnorthey-mtu/mtu-fin4600-lab-pgp]
+Then Ctrl-Shift-P to take you to the command prompt and type "git clone" run that command and paste the above URL.
+
+### Using git from the powershell command line
+
+From a Powershell or terminal you can enter a git clone command 
+
+```git clone https://github.com/jnorthey-mtu/mtu-fin4600-lab-pgp.git my-folder```
 
 ## Before session 1
 
