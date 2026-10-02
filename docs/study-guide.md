@@ -192,6 +192,279 @@ The whole lab runs in one Jupyter notebook, `notebooks/FIN4600_PGP_Lab_Student.i
 | D | 1 | Export your public key for Canvas | — |
 | E | 2 | Decrypt your challenge and send a signed, encrypted answer | 6 |
 
+## Lab flow at a glance
+
+The whole lab is one round trip: your instructor's key and challenge travel to you, and your signed answer travels back. Watch which key each step uses. **Private-key steps** (shaded red/coral) can only be done by the key's owner: signing, decrypting, and certifying. **Public-key steps** (shaded green/teal) can be done by anyone: encrypting and verifying.
+
+### Mermaid sequence diagram
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant I as Instructor (instructor notebook)
+    participant C as Canvas and classroom
+    participant S as Student (student notebook)
+
+    Note over S: Create ONE key pair in Kleopatra or GPG Keychain
+    I->>C: instructor_pub.asc on Canvas, fingerprint on the board
+    C->>S: Download key file, copy board fingerprint
+    rect rgba(216, 90, 48, 0.18)
+    Note over S: Part C: fingerprints match, CERTIFY instructor key with student PRIVATE key
+    end
+    S->>C: Part D: my_public_key.asc (assignment) and fingerprint (quiz)
+    C->>I: Student keys and roster.csv
+    rect rgba(216, 90, 48, 0.18)
+    Note over I: Steps 1-3: fingerprints match, CERTIFY student key with instructor PRIVATE key
+    Note over I: SIGN challenge with instructor PRIVATE key
+    end
+    rect rgba(29, 158, 117, 0.18)
+    Note over I: ENCRYPT challenge to student PUBLIC key
+    end
+    I->>C: challenge_username.asc
+    C->>S: Download challenge
+    rect rgba(216, 90, 48, 0.18)
+    Note over S: Part E: DECRYPT challenge with student PRIVATE key
+    end
+    rect rgba(29, 158, 117, 0.18)
+    Note over S: VERIFY signature with instructor PUBLIC key: GOOD signature
+    end
+    Note over S: Write code word and answer
+    rect rgba(216, 90, 48, 0.18)
+    Note over S: Part E2: SIGN answer with student PRIVATE key
+    end
+    rect rgba(29, 158, 117, 0.18)
+    Note over S: ENCRYPT answer to instructor PUBLIC key
+    end
+    S->>C: response.asc
+    C->>I: Download responses
+    rect rgba(216, 90, 48, 0.18)
+    Note over I: Step 4: DECRYPT response with instructor PRIVATE key
+    end
+    rect rgba(29, 158, 117, 0.18)
+    Note over I: VERIFY signature with student PUBLIC key
+    end
+    Note over I: Check code word, record grade
+```
+
+The pattern repeats in both directions: **sign with your own private key, then encrypt to the other person's public key.** The receiver undoes it in reverse: **decrypt with their own private key, then verify with the sender's public key.**
+
+### BPMN diagram for bpmn.io
+
+The same flow as a BPMN collaboration: one pool for the instructor, one for the student, with message flows for each file that crosses between them. Private-key tasks are coral and public-key tasks are teal. To view or edit it:
+
+1. Copy the XML below into a plain-text editor and save it as `pgp-lab-flow.bpmn`.
+2. Go to [demo.bpmn.io](https://demo.bpmn.io), choose **Open**, and pick the file (or drag it onto the page).
+3. From bpmn.io you can download it as an SVG or PNG image for slides.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" id="Defs_PGPLab" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:collaboration id="Collab_PGPLab">
+    <bpmn:participant id="P_Instructor" name="Instructor (instructor notebook)" processRef="Proc_Instructor" />
+    <bpmn:participant id="P_Student" name="Student (student notebook)" processRef="Proc_Student" />
+    <bpmn:messageFlow id="MF1" name="instructor_pub.asc + fingerprint on board" sourceRef="I_Publish" targetRef="S_Certify" />
+    <bpmn:messageFlow id="MF2" name="my_public_key.asc + fingerprint" sourceRef="S_Export" targetRef="I_Certify" />
+    <bpmn:messageFlow id="MF3" name="challenge_username.asc" sourceRef="I_Encrypt" targetRef="S_Decrypt" />
+    <bpmn:messageFlow id="MF4" name="response.asc" sourceRef="S_Encrypt" targetRef="I_Decrypt" />
+    <bpmn:textAnnotation id="Legend">
+      <bpmn:text>Coral = uses a PRIVATE key (certify, sign, decrypt). Teal = uses a PUBLIC key (encrypt, verify).</bpmn:text>
+    </bpmn:textAnnotation>
+  </bpmn:collaboration>
+  <bpmn:process id="Proc_Instructor" isExecutable="false">
+    <bpmn:startEvent id="I_Start" name="Lab begins">
+      <bpmn:outgoing>IF1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="I_Publish" name="Publish public key + fingerprint">
+      <bpmn:incoming>IF1</bpmn:incoming>
+      <bpmn:outgoing>IF2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="I_Certify" name="Steps 1-3: verify + CERTIFY student keys (instructor private key)">
+      <bpmn:incoming>IF2</bpmn:incoming>
+      <bpmn:outgoing>IF3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="I_Sign" name="SIGN challenge (instructor private key)">
+      <bpmn:incoming>IF3</bpmn:incoming>
+      <bpmn:outgoing>IF4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="I_Encrypt" name="ENCRYPT challenge (student public key)">
+      <bpmn:incoming>IF4</bpmn:incoming>
+      <bpmn:outgoing>IF5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="I_Decrypt" name="Step 4: DECRYPT response (instructor private key)">
+      <bpmn:incoming>IF5</bpmn:incoming>
+      <bpmn:outgoing>IF6</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="I_Verify" name="VERIFY signature (student public key)">
+      <bpmn:incoming>IF6</bpmn:incoming>
+      <bpmn:outgoing>IF7</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="I_Grade" name="Check code word, record grade">
+      <bpmn:incoming>IF7</bpmn:incoming>
+      <bpmn:outgoing>IF8</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="I_End" name="Graded">
+      <bpmn:incoming>IF8</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="IF1" sourceRef="I_Start" targetRef="I_Publish" />
+    <bpmn:sequenceFlow id="IF2" sourceRef="I_Publish" targetRef="I_Certify" />
+    <bpmn:sequenceFlow id="IF3" sourceRef="I_Certify" targetRef="I_Sign" />
+    <bpmn:sequenceFlow id="IF4" sourceRef="I_Sign" targetRef="I_Encrypt" />
+    <bpmn:sequenceFlow id="IF5" sourceRef="I_Encrypt" targetRef="I_Decrypt" />
+    <bpmn:sequenceFlow id="IF6" sourceRef="I_Decrypt" targetRef="I_Verify" />
+    <bpmn:sequenceFlow id="IF7" sourceRef="I_Verify" targetRef="I_Grade" />
+    <bpmn:sequenceFlow id="IF8" sourceRef="I_Grade" targetRef="I_End" />
+  </bpmn:process>
+  <bpmn:process id="Proc_Student" isExecutable="false">
+    <bpmn:startEvent id="S_Start" name="Lab begins">
+      <bpmn:outgoing>SF1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="S_Create" name="Create ONE key pair">
+      <bpmn:incoming>SF1</bpmn:incoming>
+      <bpmn:outgoing>SF2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="S_Certify" name="Part C: verify + CERTIFY instructor key (student private key)">
+      <bpmn:incoming>SF2</bpmn:incoming>
+      <bpmn:outgoing>SF3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="S_Export" name="Part D: export public key">
+      <bpmn:incoming>SF3</bpmn:incoming>
+      <bpmn:outgoing>SF4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="S_Decrypt" name="Part E: DECRYPT challenge (student private key)">
+      <bpmn:incoming>SF4</bpmn:incoming>
+      <bpmn:outgoing>SF5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="S_Verify" name="VERIFY signature (instructor public key)">
+      <bpmn:incoming>SF5</bpmn:incoming>
+      <bpmn:outgoing>SF6</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="S_Answer" name="Write code word + answer">
+      <bpmn:incoming>SF6</bpmn:incoming>
+      <bpmn:outgoing>SF7</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="S_Sign" name="Part E2: SIGN answer (student private key)">
+      <bpmn:incoming>SF7</bpmn:incoming>
+      <bpmn:outgoing>SF8</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="S_Encrypt" name="ENCRYPT answer (instructor public key)">
+      <bpmn:incoming>SF8</bpmn:incoming>
+      <bpmn:outgoing>SF9</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="S_End" name="Response submitted">
+      <bpmn:incoming>SF9</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SF1" sourceRef="S_Start" targetRef="S_Create" />
+    <bpmn:sequenceFlow id="SF2" sourceRef="S_Create" targetRef="S_Certify" />
+    <bpmn:sequenceFlow id="SF3" sourceRef="S_Certify" targetRef="S_Export" />
+    <bpmn:sequenceFlow id="SF4" sourceRef="S_Export" targetRef="S_Decrypt" />
+    <bpmn:sequenceFlow id="SF5" sourceRef="S_Decrypt" targetRef="S_Verify" />
+    <bpmn:sequenceFlow id="SF6" sourceRef="S_Verify" targetRef="S_Answer" />
+    <bpmn:sequenceFlow id="SF7" sourceRef="S_Answer" targetRef="S_Sign" />
+    <bpmn:sequenceFlow id="SF8" sourceRef="S_Sign" targetRef="S_Encrypt" />
+    <bpmn:sequenceFlow id="SF9" sourceRef="S_Encrypt" targetRef="S_End" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_PGPLab">
+    <bpmndi:BPMNPlane id="Plane_PGPLab" bpmnElement="Collab_PGPLab">
+      <bpmndi:BPMNShape id="P_Instructor_di" bpmnElement="P_Instructor" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="2380" height="180" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="P_Student_di" bpmnElement="P_Student" isHorizontal="true">
+        <dc:Bounds x="160" y="340" width="2380" height="180" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Legend_di" bpmnElement="Legend">
+        <dc:Bounds x="160" y="10" width="620" height="40" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="I_Start_di" bpmnElement="I_Start">
+        <dc:Bounds x="210" y="152" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="200" y="195" width="56" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="I_Publish_di" bpmnElement="I_Publish">
+        <dc:Bounds x="280" y="125" width="120" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="I_Certify_di" bpmnElement="I_Certify" bioc:stroke="#993C1D" bioc:fill="#FAECE7" color:background-color="#FAECE7" color:border-color="#993C1D">
+        <dc:Bounds x="760" y="125" width="120" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="I_Sign_di" bpmnElement="I_Sign" bioc:stroke="#993C1D" bioc:fill="#FAECE7" color:background-color="#FAECE7" color:border-color="#993C1D">
+        <dc:Bounds x="910" y="125" width="120" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="I_Encrypt_di" bpmnElement="I_Encrypt" bioc:stroke="#0F6E56" bioc:fill="#E1F5EE" color:background-color="#E1F5EE" color:border-color="#0F6E56">
+        <dc:Bounds x="1060" y="125" width="120" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="I_Decrypt_di" bpmnElement="I_Decrypt" bioc:stroke="#993C1D" bioc:fill="#FAECE7" color:background-color="#FAECE7" color:border-color="#993C1D">
+        <dc:Bounds x="2020" y="125" width="120" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="I_Verify_di" bpmnElement="I_Verify" bioc:stroke="#0F6E56" bioc:fill="#E1F5EE" color:background-color="#E1F5EE" color:border-color="#0F6E56">
+        <dc:Bounds x="2170" y="125" width="120" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="I_Grade_di" bpmnElement="I_Grade">
+        <dc:Bounds x="2320" y="125" width="120" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="I_End_di" bpmnElement="I_End">
+        <dc:Bounds x="2480" y="152" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="2478" y="195" width="40" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Start_di" bpmnElement="S_Start">
+        <dc:Bounds x="210" y="412" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="200" y="455" width="56" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Create_di" bpmnElement="S_Create">
+        <dc:Bounds x="280" y="385" width="120" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Certify_di" bpmnElement="S_Certify" bioc:stroke="#993C1D" bioc:fill="#FAECE7" color:background-color="#FAECE7" color:border-color="#993C1D">
+        <dc:Bounds x="430" y="385" width="120" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Export_di" bpmnElement="S_Export">
+        <dc:Bounds x="580" y="385" width="120" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Decrypt_di" bpmnElement="S_Decrypt" bioc:stroke="#993C1D" bioc:fill="#FAECE7" color:background-color="#FAECE7" color:border-color="#993C1D">
+        <dc:Bounds x="1240" y="385" width="120" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Verify_di" bpmnElement="S_Verify" bioc:stroke="#0F6E56" bioc:fill="#E1F5EE" color:background-color="#E1F5EE" color:border-color="#0F6E56">
+        <dc:Bounds x="1390" y="385" width="120" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Answer_di" bpmnElement="S_Answer">
+        <dc:Bounds x="1540" y="385" width="120" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Sign_di" bpmnElement="S_Sign" bioc:stroke="#993C1D" bioc:fill="#FAECE7" color:background-color="#FAECE7" color:border-color="#993C1D">
+        <dc:Bounds x="1690" y="385" width="120" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Encrypt_di" bpmnElement="S_Encrypt" bioc:stroke="#0F6E56" bioc:fill="#E1F5EE" color:background-color="#E1F5EE" color:border-color="#0F6E56">
+        <dc:Bounds x="1840" y="385" width="120" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_End_di" bpmnElement="S_End">
+        <dc:Bounds x="2000" y="412" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1975" y="455" width="86" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="IF1_di" bpmnElement="IF1"><di:waypoint x="246" y="170" /><di:waypoint x="280" y="170" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="IF2_di" bpmnElement="IF2"><di:waypoint x="400" y="170" /><di:waypoint x="760" y="170" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="IF3_di" bpmnElement="IF3"><di:waypoint x="880" y="170" /><di:waypoint x="910" y="170" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="IF4_di" bpmnElement="IF4"><di:waypoint x="1030" y="170" /><di:waypoint x="1060" y="170" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="IF5_di" bpmnElement="IF5"><di:waypoint x="1180" y="170" /><di:waypoint x="2020" y="170" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="IF6_di" bpmnElement="IF6"><di:waypoint x="2140" y="170" /><di:waypoint x="2170" y="170" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="IF7_di" bpmnElement="IF7"><di:waypoint x="2290" y="170" /><di:waypoint x="2320" y="170" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="IF8_di" bpmnElement="IF8"><di:waypoint x="2440" y="170" /><di:waypoint x="2480" y="170" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF1_di" bpmnElement="SF1"><di:waypoint x="246" y="430" /><di:waypoint x="280" y="430" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF2_di" bpmnElement="SF2"><di:waypoint x="400" y="430" /><di:waypoint x="430" y="430" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF3_di" bpmnElement="SF3"><di:waypoint x="550" y="430" /><di:waypoint x="580" y="430" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF4_di" bpmnElement="SF4"><di:waypoint x="700" y="430" /><di:waypoint x="1240" y="430" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF5_di" bpmnElement="SF5"><di:waypoint x="1360" y="430" /><di:waypoint x="1390" y="430" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF6_di" bpmnElement="SF6"><di:waypoint x="1510" y="430" /><di:waypoint x="1540" y="430" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF7_di" bpmnElement="SF7"><di:waypoint x="1660" y="430" /><di:waypoint x="1690" y="430" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF8_di" bpmnElement="SF8"><di:waypoint x="1810" y="430" /><di:waypoint x="1840" y="430" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF9_di" bpmnElement="SF9"><di:waypoint x="1960" y="430" /><di:waypoint x="2000" y="430" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MF1_di" bpmnElement="MF1"><di:waypoint x="340" y="215" /><di:waypoint x="340" y="300" /><di:waypoint x="490" y="300" /><di:waypoint x="490" y="385" />
+        <bpmndi:BPMNLabel><dc:Bounds x="345" y="268" width="140" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MF2_di" bpmnElement="MF2"><di:waypoint x="640" y="385" /><di:waypoint x="640" y="300" /><di:waypoint x="820" y="300" /><di:waypoint x="820" y="215" />
+        <bpmndi:BPMNLabel><dc:Bounds x="650" y="305" width="160" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MF3_di" bpmnElement="MF3"><di:waypoint x="1120" y="215" /><di:waypoint x="1120" y="300" /><di:waypoint x="1300" y="300" /><di:waypoint x="1300" y="385" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1140" y="280" width="140" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MF4_di" bpmnElement="MF4"><di:waypoint x="1900" y="385" /><di:waypoint x="1900" y="300" /><di:waypoint x="2080" y="300" /><di:waypoint x="2080" y="215" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1950" y="305" width="80" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
+```
+
 ## Lab checklist
 
 ### Session 1
